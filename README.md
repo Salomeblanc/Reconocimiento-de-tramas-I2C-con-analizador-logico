@@ -6,7 +6,6 @@ Práctica de laboratorio de **Comunicaciones Digitales** · Programa de Ingenier
 |---|---|
 | **Autores** | Harol Felipe Riveros Sierra (1401660) · Salome Bohórquez Blanco (1401654) |
 | **Docente** | Ing. José de Jesús Rugeles Uribe |
-| **Guía original y código base** | <https://github.com/jrugeles/I2C> |
 
 ---
 
@@ -28,18 +27,20 @@ Se analiza el protocolo **I²C** capturando las señales SCL y SDA con un analiz
 - Pantalla OLED SSD1306 128×32, I²C, dirección `0x3C`
 - Analizador lógico USB de 8 canales, 24 MHz
 - Software Logic 2 (con el decodificador I²C habilitado)
+- Biblioteca `ssd1306.py` de MicroPython copiada en la Pico (la usa `OLED_demo_menu.py`)
 - Protoboard y cables de conexión
 
 ## Conexiones
 
 | Señal | Pico 2W | Analizador lógico | OLED |
 |---|---|---|---|
-| SCL (I²C1) | GP15 | CH0 | SCL |
-| SDA (I²C1) | GP14 | CH1 | SDA |
+| SCL | GP15 (I²C1) en las partes 1 y 2 · GP13 (I²C0) en la parte 3 | CH0 | SCL |
+| SDA | GP14 (I²C1) en las partes 1 y 2 · GP12 (I²C0) en la parte 3 | CH1 | SDA |
 | GND | GND | GND (común) | GND |
 | Alimentación | 3V3 | (no se conecta) | VCC |
 
-> Verificar en el módulo OLED que la alimentación sea compatible con 3.3 V.
+> Los pines de la parte 3 son los que trae `OLED_demo_menu.py` (`BUS_ID = 0`, `PIN_SCL = 13`, `PIN_SDA = 12`). Si se cablea en GP15/GP14, cambiar esas tres constantes a `BUS_ID = 1`, `PIN_SCL = 15` y `PIN_SDA = 14`.
+> El script recomienda pull-ups externos de 4.7 kΩ a 10 kΩ a 3V3 en SDA y SCL. Verificar en el módulo OLED que la alimentación sea compatible con 3.3 V.
 
 **Frecuencia de muestreo:** configurar el analizador a ≥ 10 × f<sub>SCL</sub> (por ejemplo, ≥ 1 MS/s para un bus de 100 kHz).
 
@@ -50,13 +51,16 @@ Se analiza el protocolo **I²C** capturando las señales SCL y SDA con un analiz
 ├── README.md
 ├── codigo/
 │   ├── OLED_ADDR_test.py      # Prueba ACK/NACK (0x3C / 0x3D)
-│   ├── scan_i2c_addr.py       # Escaneo de direcciones con i2c.scan()
-│   └── OLED_demo_menu.py      # Menú por consola para la OLED
+│   ├── OLED_ADDR_scan.py      # Escaneo de direcciones con i2c.scan()
+│   ├── OLED_demo_menu.py      # Menú por consola para la OLED (requiere ssd1306.py)
+│   └── ssd1306.py             # Biblioteca de la pantalla 
 ├── informe/
 │   ├── 8 INFORME COMUNICACION DIGITAL (HAROL RIVEROS - SALOME BOHORQUEZ).pdf
 │   └── 8 INFORME COMUNICACION DIGITAL (HAROL RIVEROS - SALOME BOHORQUEZ).docx
 ├── capturas/
 │   └── segundo lab cd.pdf     # Capturas de Logic 2 y fotos del montaje
+├── guia/
+│   └── I2C_Lab.pdf            # Guía del laboratorio
 └── tablas/
     └── Tablas de la respectiva práctica.xlsx
 ```
@@ -68,18 +72,18 @@ Se analiza el protocolo **I²C** capturando las señales SCL y SDA con un analiz
 
 ### Parte 1 · ACK y NACK
 
-1. Ejecutar `codigo/OLED_ADDR_test.py` con `ADDR = 0x3C`. Iniciar la captura antes de pulsar *Run* (el script espera 1 s).
+1. Ejecutar `codigo/OLED_ADDR_test.py` con `ADDR = 0x3C` (I²C1, 100 kHz). Iniciar la captura antes de pulsar *Run* (el script espera 1 s).
 2. Identificar **START → 0x78 → ACK → STOP** y medir f<sub>SCL</sub> con los cursores.
 3. Cambiar a `ADDR = 0x3D`, repetir y comprobar que en el bit 9 SDA queda en alto (**NACK**).
 
 ### Parte 2 · Escaneo del bus
 
-1. Iniciar la captura y ejecutar `codigo/scan_i2c_addr.py`.
+1. Iniciar la captura y ejecutar `codigo/OLED_ADDR_scan.py`.
 2. En consola debe aparecer `0x3c`; en Logic 2, sondeos con NAK y un solo ACK en `0x3C`.
 
 ### Parte 3 · Comandos de la OLED
 
-1. Ejecutar `codigo/OLED_demo_menu.py`. El programa escanea el bus, detecta la OLED y muestra un menú (bus a 50 kHz):
+1. Copiar `ssd1306.py` a la Pico y ejecutar `codigo/OLED_demo_menu.py`. El programa escanea el bus, detecta la OLED (`0x3C` o `0x3D`), muestra el texto de bienvenida y despliega un menú (bus a 50 kHz):
    `1` Apagar (`0xAE`) · `2` Encender (`0xAF`) · `3` Contraste (0-255) · `4` Invertir 1/0 · `5` Limpiar · `6` Texto demo · `7` Animación breve · `8` Comando RAW · `9` Dato RAW · `F` Cambiar frecuencia I²C · `0` Salir
 2. Capturar cada opción y comparar los bytes con la hoja de datos.
 
@@ -123,15 +127,21 @@ Con 100 kHz configurados se midieron ≈ 83 kHz, por lo que conviene verificar l
 | Contraste (128) | `0x80, 0x81` y luego `0x80, 0x80` | Set Contrast Control (comando + valor) |
 | Invertir = 1 | `0x80, 0xA7` | Inverse Display |
 | Invertir = 0 | `0x80, 0xA6` | Normal Display |
-| Texto/animación | `0x80, 0x03` y luego `0x40, 0x00, 0x00, 0x41, 0x7F, …` | Comando de columna y escritura de datos en la GDDRAM |
+| Texto/animación | `0x80, 0x03` y luego `0x40, 0x00, 0x00, 0x41, 0x7F, …` | Último byte del direccionamiento de página (128×32 → páginas 0 a 3) y escritura de datos en la GDDRAM |
 
 El byte de control `0x80` precede a los comandos (Co = 1, D/C# = 0) y `0x40` a los datos de pantalla (Co = 0, D/C# = 1).
+
+Cómo se relaciona el código con lo capturado:
+
+- Cada comando se envía con `send_cmd_raw()`, que transmite `0x80` + comando y luego espera 2 ms (`time.sleep_ms(2)`). Por eso el contraste (`0x81` y después el valor) aparece como dos transacciones separadas ≈ 2.15 ms.
+- El texto se envía por trozos: `ChunkedSSD1306_I2C.write_data()` transmite `0x40` seguido de 16 bytes (`CHUNK = 16`) en cada transacción. Los bytes de la captura (`0x00, 0x00, 0x41, 0x7F, …`) son columnas de píxeles del texto «I2C MENU».
+- El `0x03` que precede a los datos corresponde al final del direccionamiento de página que envía el método `show()` del driver `ssd1306` (una pantalla de 32 píxeles tiene 4 páginas).
 
 ## Conclusiones
 
 - Una transacción de escritura I²C se compone de START, octeto de dirección + R/W, bit de reconocimiento y STOP.
 - Entre `0x3C` y `0x3D` solo cambian el octeto (`0x78` / `0x7A`) y el nivel de SDA en el bit 9 (ACK = 0, NACK = 1).
-- La frecuencia real de SCL puede diferir de la configurada; se midieron ≈ 83 kHz (100 kHz configurados) y = 47.6 kHz (50 kHz configurados).
+- La frecuencia real de SCL puede diferir de la configurada; se midieron ≈ 83 kHz (100 kHz configurados) y ≈ 47.6 kHz (50 kHz configurados).
 - `i2c.scan()` detectó únicamente la OLED en `0x3C`.
 - Los bytes capturados coinciden con la hoja de datos del SSD1306 y con el efecto visible en la pantalla.
 
