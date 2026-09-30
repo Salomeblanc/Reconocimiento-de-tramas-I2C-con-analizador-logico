@@ -11,9 +11,9 @@ from ssd1306 import SSD1306_I2C
 import time, sys
 
 # ---------- Config ----------
-BUS_ID   = 0
-PIN_SCL  = 13
-PIN_SDA  = 12
+BUS_ID   = 1
+PIN_SCL  = 15
+PIN_SDA  = 14
 FREQ     = 50_000       # 50 kHz: cómodo para analizador lógico (sube a 100k/400k si todo va bien)
 CHUNK    = 16           # tamaño de trozo para write_data (8/16/32 suelen ir bien)
 PAUSE_US = 0            # micro-pausa entre trozos (0..100). Si hay errores, prueba 50.
