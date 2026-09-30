@@ -131,7 +131,7 @@ El byte de control `0x80` precede a los comandos (Co = 1, D/C# = 0) y `0x40` a l
 
 - Una transacción de escritura I²C se compone de START, octeto de dirección + R/W, bit de reconocimiento y STOP.
 - Entre `0x3C` y `0x3D` solo cambian el octeto (`0x78` / `0x7A`) y el nivel de SDA en el bit 9 (ACK = 0, NACK = 1).
-- La frecuencia real de SCL puede diferir de la configurada; se midieron ≈ 83 kHz (100 kHz configurados) y ≈ 47.6 kHz (50 kHz configurados).
+- La frecuencia real de SCL puede diferir de la configurada; se midieron ≈ 83 kHz (100 kHz configurados) y = 47.6 kHz (50 kHz configurados).
 - `i2c.scan()` detectó únicamente la OLED en `0x3C`.
 - Los bytes capturados coinciden con la hoja de datos del SSD1306 y con el efecto visible en la pantalla.
 
