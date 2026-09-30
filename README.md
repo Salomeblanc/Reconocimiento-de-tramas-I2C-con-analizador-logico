@@ -7,6 +7,7 @@ Práctica de laboratorio de **Comunicaciones Digitales** · Programa de Ingenier
 | **Autores** | Harol Felipe Riveros Sierra (1401660) · Salome Bohórquez Blanco (1401654) |
 | **Docente** | Ing. José de Jesús Rugeles Uribe |
 
+
 ---
 
 ## Descripción
@@ -27,19 +28,19 @@ Se analiza el protocolo **I²C** capturando las señales SCL y SDA con un analiz
 - Pantalla OLED SSD1306 128×32, I²C, dirección `0x3C`
 - Analizador lógico USB de 8 canales, 24 MHz
 - Software Logic 2 (con el decodificador I²C habilitado)
-- Biblioteca `ssd1306.py` de MicroPython copiada en la Pico (la usa `OLED_demo_menu.py`)
+- Biblioteca `micropython-ssd1306`, instalada desde Thonny (la usa `OLED_demo_menu.py`)
 - Protoboard y cables de conexión
 
 ## Conexiones
 
 | Señal | Pico 2W | Analizador lógico | OLED |
 |---|---|---|---|
-| SCL | GP15 (I²C1) en las partes 1 y 2 · GP13 (I²C0) en la parte 3 | CH0 | SCL |
-| SDA | GP14 (I²C1) en las partes 1 y 2 · GP12 (I²C0) en la parte 3 | CH1 | SDA |
+| SCL (I²C1) | GP15 | CH0 | SCL |
+| SDA (I²C1) | GP14 | CH1 | SDA |
 | GND | GND | GND (común) | GND |
 | Alimentación | 3V3 | (no se conecta) | VCC |
 
-> Los pines de la parte 3 son los que trae `OLED_demo_menu.py` (`BUS_ID = 0`, `PIN_SCL = 13`, `PIN_SDA = 12`). Si se cablea en GP15/GP14, cambiar esas tres constantes a `BUS_ID = 1`, `PIN_SCL = 15` y `PIN_SDA = 14`.
+> En las tres partes se usa el mismo cableado. `OLED_demo_menu.py` está configurado con `BUS_ID = 1`, `PIN_SCL = 15` y `PIN_SDA = 14`.
 > El script recomienda pull-ups externos de 4.7 kΩ a 10 kΩ a 3V3 en SDA y SCL. Verificar en el módulo OLED que la alimentación sea compatible con 3.3 V.
 
 **Frecuencia de muestreo:** configurar el analizador a ≥ 10 × f<sub>SCL</sub> (por ejemplo, ≥ 1 MS/s para un bus de 100 kHz).
@@ -52,8 +53,7 @@ Se analiza el protocolo **I²C** capturando las señales SCL y SDA con un analiz
 ├── codigo/
 │   ├── OLED_ADDR_test.py      # Prueba ACK/NACK (0x3C / 0x3D)
 │   ├── OLED_ADDR_scan.py      # Escaneo de direcciones con i2c.scan()
-│   ├── OLED_demo_menu.py      # Menú por consola para la OLED (requiere ssd1306.py)
-│   └── ssd1306.py             # Biblioteca de la pantalla 
+│   └── OLED_demo_menu.py      # Menú por consola para la OLED (requiere la biblioteca ssd1306)
 ├── informe/
 │   ├── 8 INFORME COMUNICACION DIGITAL (HAROL RIVEROS - SALOME BOHORQUEZ).pdf
 │   └── 8 INFORME COMUNICACION DIGITAL (HAROL RIVEROS - SALOME BOHORQUEZ).docx
@@ -68,7 +68,8 @@ Se analiza el protocolo **I²C** capturando las señales SCL y SDA con un analiz
 ## Cómo reproducir la práctica
 
 1. Cargar MicroPython en la Pico 2W y conectar todo según la tabla de conexiones.
-2. En Logic 2, asignar CH0 → SCL y CH1 → SDA, agregar el analizador **I²C** y fijar la frecuencia de muestreo.
+2. Para la parte 3, instalar la biblioteca de la pantalla desde Thonny, con la Pico conectada: **Herramientas → Administrar paquetes**, buscar `micropython-ssd1306` e instalar.
+3. En Logic 2, asignar CH0 → SCL y CH1 → SDA, agregar el analizador **I²C** y fijar la frecuencia de muestreo.
 
 ### Parte 1 · ACK y NACK
 
@@ -83,7 +84,7 @@ Se analiza el protocolo **I²C** capturando las señales SCL y SDA con un analiz
 
 ### Parte 3 · Comandos de la OLED
 
-1. Copiar `ssd1306.py` a la Pico y ejecutar `codigo/OLED_demo_menu.py`. El programa escanea el bus, detecta la OLED (`0x3C` o `0x3D`), muestra el texto de bienvenida y despliega un menú (bus a 50 kHz):
+1. Ejecutar `codigo/OLED_demo_menu.py` (con la biblioteca ya instalada). El programa escanea el bus, detecta la OLED (`0x3C` o `0x3D`), muestra el texto de bienvenida y despliega un menú (bus a 50 kHz):
    `1` Apagar (`0xAE`) · `2` Encender (`0xAF`) · `3` Contraste (0-255) · `4` Invertir 1/0 · `5` Limpiar · `6` Texto demo · `7` Animación breve · `8` Comando RAW · `9` Dato RAW · `F` Cambiar frecuencia I²C · `0` Salir
 2. Capturar cada opción y comparar los bytes con la hoja de datos.
 
